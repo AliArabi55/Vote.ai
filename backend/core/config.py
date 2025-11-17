@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     AZURE_OPENAI_API_KEY: str
     AZURE_OPENAI_ENDPOINT: str
     AZURE_OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    AZURE_OPENAI_CHAT_MODEL: str = "gpt-4o-mini"
     AZURE_OPENAI_API_VERSION: str = "2024-02-01"
     
     # JWT Security
@@ -33,8 +34,10 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
+        env_file_encoding = "utf-8"
         case_sensitive = True
+        extra = "ignore"
 
 
 # Create global settings instance
-settings = Settings()
+settings = Settings(_env_file=".env")
