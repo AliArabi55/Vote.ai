@@ -1,0 +1,14 @@
+# Vote.ai
+
+node_modules/
+venv/
+.env
+*.pyc
+__pycache__/
+.pytest_cache/
+.coverage
+*.log
+.DS_Store
+dist/
+build/
+*.egg-info/
