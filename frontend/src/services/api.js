@@ -82,6 +82,14 @@ export const suggestionsAPI = {
     return response.data;
   },
 
+  checkSimilarity: async (title) => {
+    const response = await api.post('/suggestions/check-similarity', {
+      query: title,
+      limit: 5,
+    });
+    return response.data;
+  },
+
   create: async (title, description) => {
     const response = await api.post('/suggestions', {
       title,
@@ -90,8 +98,8 @@ export const suggestionsAPI = {
     return response.data;
   },
 
-  getAll: async () => {
-    const response = await api.get('/suggestions');
+  getAll: async (params = {}) => {
+    const response = await api.get('/suggestions', { params });
     return response.data;
   },
 
@@ -105,8 +113,51 @@ export const suggestionsAPI = {
     return response.data;
   },
 
+  upvote: async (suggestionId) => {
+    const response = await api.post(`/suggestions/${suggestionId}/vote`, {
+      vote_type: 'upvote',
+    });
+    return response.data;
+  },
+
+  downvote: async (suggestionId) => {
+    const response = await api.post(`/suggestions/${suggestionId}/vote`, {
+      vote_type: 'downvote',
+    });
+    return response.data;
+  },
+
+  removeVote: async (suggestionId) => {
+    const response = await api.delete(`/suggestions/${suggestionId}/vote`);
+    return response.data;
+  },
+
+  search: async (query, limit = 5) => {
+    const response = await api.post('/suggestions/search', { query, limit });
+    return response.data;
+  },
+
   getMyVotes: async () => {
     const response = await api.get('/suggestions/my/votes');
+    return response.data;
+  },
+
+  update: async (suggestionId, updates) => {
+    const response = await api.put(`/suggestions/${suggestionId}`, updates);
+    return response.data;
+  },
+
+  delete: async (suggestionId) => {
+    const response = await api.delete(`/suggestions/${suggestionId}`);
+    return response.data;
+  },
+};
+
+// ==================== Health Check ====================
+
+export const healthAPI = {
+  check: async () => {
+    const response = await api.get('/health');
     return response.data;
   },
 };

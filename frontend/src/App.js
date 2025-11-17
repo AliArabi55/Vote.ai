@@ -1,40 +1,60 @@
 /**
- * Main App Component
+ * Main App Component - Vote.ai
  * Handles routing and authentication
  */
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
-import './App.css';
 
-// Protected Route Component
+// Check if user is authenticated
+const isAuthenticated = () => {
+  return !!localStorage.getItem('access_token');
+};
+
+// Protected Route Component - Requires authentication
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('access_token');
-  
-  if (!token) {
+  if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
-  
+  return children;
+};
+
+// Public Route - Redirect to home if already authenticated
+const PublicRoute = ({ children }) => {
+  if (isAuthenticated()) {
+    return <Navigate to="/" replace />;
+  }
   return children;
 };
 
 function App() {
   return (
     <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </div>
+      <Routes>
+        {/* Public Route - Login Page */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+
+        {/* Protected Route - Home Page */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback - Redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Router>
   );
 }

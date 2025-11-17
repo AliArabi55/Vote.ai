@@ -49,6 +49,63 @@ class VoteResponse(BaseModel):
     user_has_voted: bool
 
 
+class SimilarityCheckRequest(BaseModel):
+    query: str
+    limit: int = 5
+
+
+class SimilarSuggestion(BaseModel):
+    id: str
+    title: str
+    description: Optional[str]
+    total_votes: int
+    similarity_score: float
+
+
+@router.post("/check-similarity", response_model=List[SimilarSuggestion])
+async def check_similarity(
+    request: SimilarityCheckRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Check for similar suggestions in real-time as user types
+    
+    This endpoint is called by the frontend with debouncing (500ms) to provide
+    instant feedback about similar ideas while the user is typing the title.
+    
+    Returns suggestions with similarity > 80% (0.80 threshold)
+    """
+    # Validate input
+    if not request.query or len(request.query.strip()) < 3:
+        return []
+    
+    # Generate embedding for the search query
+    query_embedding = get_embedding(request.query.strip())
+    
+    # Find similar suggestions (threshold = 0.55 means 55% similar)
+    # Lowered from 0.80 to 0.55 for better detection of similar ideas
+    similar = find_similar_suggestions(
+        db, 
+        query_embedding, 
+        threshold=0.55,  # 55% similarity threshold
+        limit=request.limit
+    )
+    
+    # Transform to response format
+    results = []
+    for suggestion in similar:
+        results.append(SimilarSuggestion(
+            id=suggestion["id"],
+            title=suggestion["title"],
+            description=suggestion["description"],
+            total_votes=suggestion["vote_count"],
+            similarity_score=suggestion["similarity"]
+        ))
+    
+    return results
+
+
 @router.post("/check-duplicate", response_model=DuplicateCheckResponse)
 async def check_duplicate(
     suggestion_data: SuggestionCreate,

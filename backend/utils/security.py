@@ -5,12 +5,8 @@ Handles password hashing and JWT token creation/verification
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from core.config import settings
-
-
-# Password hashing context using bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
@@ -23,7 +19,11 @@ def hash_password(password: str) -> str:
     Returns:
         Hashed password string
     """
-    return pwd_context.hash(password)
+    # Convert password to bytes and hash it
+    password_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -37,7 +37,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password matches, False otherwise
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    password_bytes = plain_password.encode('utf-8')
+    hashed_bytes = hashed_password.encode('utf-8')
+    return bcrypt.checkpw(password_bytes, hashed_bytes)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

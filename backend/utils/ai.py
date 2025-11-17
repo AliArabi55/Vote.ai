@@ -81,11 +81,12 @@ def find_similar_suggestions(
     
     # Query using pgvector's cosine distance operator (<=>)
     # Note: 1 - distance = similarity
+    # Use proper parameter binding for SQLAlchemy
     query = text("""
         SELECT id, title, description, vote_count,
-               1 - (embedding <=> :embedding::vector) as similarity
+               1 - (embedding <=> CAST(:embedding AS vector)) as similarity
         FROM suggestions
-        WHERE 1 - (embedding <=> :embedding::vector) > :threshold
+        WHERE 1 - (embedding <=> CAST(:embedding AS vector)) > :threshold
         ORDER BY similarity DESC
         LIMIT :limit
     """)
