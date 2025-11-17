@@ -1,25 +1,25 @@
 # Vote.ai - Ambassador Voice Platform
-## نظام التصويت والتصنيف الديناميكي للمقترحات
+## Dynamic Voting & Ranking System for Suggestions
 
 ---
 
-## 📋 نظرة عامة على المشروع
+## 📋 Project Overview
 
-**Vote.ai** هو منصة ذكية لإدارة مقترحات السفراء مع نظام تصويت ديناميكي وتصنيف تلقائي. المنصة تستخدم الذكاء الاصطناعي لدمج المقترحات المتشابهة ومنع التكرار، مما يساعد صناع القرار على رؤية الأولويات الحقيقية للمجتمع.
+**Vote.ai** is an intelligent platform for managing ambassador suggestions with a dynamic voting system and automatic ranking. The platform uses AI to merge similar suggestions and prevent duplicates, helping decision-makers see the community's real priorities.
 
-### 🎯 الميزات الرئيسية
-- ✅ نظام تصويت ديناميكي مع تحديث فوري للواجهة (Optimistic UI)
-- ✅ تصنيف تلقائي من الأعلى للأسفل حسب عدد الأصوات
-- ✅ كشف ذكي للمقترحات المتشابهة باستخدام Azure OpenAI
-- ✅ منع التصويت المكرر لنفس المستخدم
-- ✅ نظام مصادقة آمن باستخدام JWT
-- ✅ قاعدة بيانات PostgreSQL على Azure
+### 🎯 Key Features
+- ✅ Dynamic voting system with instant UI updates (Optimistic UI)
+- ✅ Automatic top-to-bottom ranking by vote count
+- ✅ Smart detection of similar suggestions using Azure OpenAI
+- ✅ Prevents duplicate voting by the same user
+- ✅ Secure authentication system using JWT
+- ✅ PostgreSQL database on Azure
 
 ---
 
-## 🏗️ البنية المعمارية (Architecture)
+## 🏗️ Architecture
 
-### التقنيات المستخدمة (Tech Stack)
+### Tech Stack
 
 #### Backend
 - **Framework**: FastAPI (Python)
@@ -42,11 +42,11 @@
 
 ---
 
-## 📊 تصميم قاعدة البيانات (Database Schema)
+## 📊 Database Schema
 
-### الجداول الأساسية
+### Core Tables
 
-#### 1. جدول المستخدمين (users)
+#### 1. Users Table (users)
 ```sql
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -58,15 +58,15 @@ CREATE TABLE users (
 );
 ```
 
-**الحقول:**
-- `id`: المعرف الفريد للمستخدم
-- `email`: البريد الإلكتروني (فريد)
-- `full_name`: الاسم الكامل
-- `password_hash`: كلمة المرور المشفرة (Bcrypt)
-- `role`: الدور (ambassador أو manager)
-- `created_at`: تاريخ إنشاء الحساب
+**Fields:**
+- `id`: Unique user identifier
+- `email`: Email address (unique)
+- `full_name`: Full name
+- `password_hash`: Encrypted password (Bcrypt)
+- `role`: Role (ambassador or manager)
+- `created_at`: Account creation date
 
-#### 2. جدول المقترحات (suggestions)
+#### 2. Suggestions Table (suggestions)
 ```sql
 CREATE TABLE suggestions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -82,19 +82,19 @@ CREATE TABLE suggestions (
 CREATE INDEX idx_vote_count ON suggestions(vote_count DESC);
 ```
 
-**الحقول:**
-- `id`: المعرف الفريد للمقترح
-- `user_id`: معرف المستخدم صاحب المقترح
-- `title`: عنوان المقترح
-- `description`: الوصف التفصيلي
-- `embedding`: Vector للذكاء الاصطناعي (1536 بُعد)
-- `vote_count`: عدد الأصوات - **مفهرس للسرعة**
-- `status`: الحالة (pending, approved, rejected)
-- `created_at`: تاريخ الإنشاء
+**Fields:**
+- `id`: Unique suggestion identifier
+- `user_id`: ID of the user who created the suggestion
+- `title`: Suggestion title
+- `description`: Detailed description
+- `embedding`: AI vector (1536 dimensions)
+- `vote_count`: Vote count - **Indexed for speed**
+- `status`: Status (pending, approved, rejected)
+- `created_at`: Creation date
 
-**ملاحظة هندسية مهمة:** الـ Index على `vote_count DESC` يجعل استعلام الترتيب فوريًا حتى مع 10,000 سجل.
+**Important Engineering Note:** The Index on `vote_count DESC` makes the ranking query instant even with 10,000+ records.
 
-#### 3. جدول الأصوات (votes)
+#### 3. Votes Table (votes)
 ```sql
 CREATE TABLE votes (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -104,16 +104,16 @@ CREATE TABLE votes (
 );
 ```
 
-**الغرض:** منع التصويت المكرر من نفس المستخدم على نفس المقترح.
-- **Composite Primary Key**: (user_id, suggestion_id) يضمن سجل واحد فقط لكل مستخدم ومقترح.
+**Purpose:** Prevent duplicate voting from the same user on the same suggestion.
+- **Composite Primary Key**: (user_id, suggestion_id) ensures only one record per user per suggestion.
 
 ---
 
-## 🔐 نظام المصادقة (Authentication Flow)
+## 🔐 Authentication Flow
 
-### التدفق الكامل
+### Complete Flow
 
-#### 1. التسجيل (Sign Up)
+#### 1. Sign Up
 ```
 User → Enter (Name, Email, Password)
 Backend → Hash Password with Bcrypt
@@ -121,7 +121,7 @@ Backend → Save to Database
 Backend → Return Success
 ```
 
-#### 2. تسجيل الدخول (Login)
+#### 2. Login
 ```
 User → Enter (Email, Password)
 Backend → Find User in Database
@@ -130,7 +130,7 @@ Backend → Generate JWT Token
 Backend → Return Token to Frontend
 ```
 
-#### 3. الطلبات المصرح بها (Authenticated Requests)
+#### 3. Authenticated Requests
 ```
 Frontend → Send Request with Token in Header
 Backend → Verify Token
@@ -138,7 +138,7 @@ Backend → Extract user_id from Token
 Backend → Process Request
 ```
 
-**رمز JWT يحتوي على:**
+**JWT Token contains:**
 ```json
 {
   "sub": "user-uuid-here",
@@ -149,38 +149,38 @@ Backend → Process Request
 
 ---
 
-## ⚡ منطق التصويت (Voting Logic)
+## ⚡ Voting Logic
 
-### التدفق الكامل للتصويت
+### Complete Voting Flow
 
-#### السيناريو 1: تصويت جديد (New Vote)
+#### Scenario 1: New Vote
 ```python
-1. التحقق: هل يوجد سجل في جدول votes للمستخدم + المقترح؟
-   → إذا لا:
-      - إضافة سجل جديد في جدول votes
-      - تحديث vote_count في جدول suggestions (+1)
-      - إرجاع العدد الجديد للواجهة
+1. Check: Does a record exist in votes table for user + suggestion?
+   → If no:
+      - Add new record in votes table
+      - Update vote_count in suggestions table (+1)
+      - Return new count to frontend
 ```
 
-#### السيناريو 2: إلغاء التصويت (Remove Vote - اختياري)
+#### Scenario 2: Remove Vote (Optional)
 ```python
-1. التحقق: هل يوجد سجل في جدول votes؟
-   → إذا نعم:
-      - حذف السجل من جدول votes
-      - تحديث vote_count في جدول suggestions (-1)
-      - إرجاع العدد الجديد للواجهة
+1. Check: Does a record exist in votes table?
+   → If yes:
+      - Delete record from votes table
+      - Update vote_count in suggestions table (-1)
+      - Return new count to frontend
 ```
 
-### SQL للاستعلامات الرئيسية
+### SQL for Main Queries
 
-#### الحصول على القائمة المرتبة
+#### Get Ranked List
 ```sql
 SELECT * FROM suggestions 
 ORDER BY vote_count DESC;
 ```
-**النتيجة:** المقترح صاحب 150 صوت يظهر أولاً، والمقترح صاحب 2 صوت يظهر أخيرًا.
+**Result:** The suggestion with 150 votes appears first, the suggestion with 2 votes appears last.
 
-#### التحقق من التصويت
+#### Check for Vote
 ```sql
 SELECT EXISTS(
     SELECT 1 FROM votes 
@@ -190,57 +190,57 @@ SELECT EXISTS(
 
 ---
 
-## 🎨 تجربة المستخدم (Frontend UX)
+## 🎨 User Experience (Frontend UX)
 
-### واجهة بطاقة المقترح (Suggestion Card)
+### Suggestion Card Interface
 
 ```
 ┌─────────────────────────────────────┐
-│  👍 142                   [صوّت]  │
+│  👍 142                   [Vote]  │
 │                                     │
-│  تحسين حدود Azure Credits          │
-│  للطلاب في مشاريع الـ ML            │
+│  Improve Azure Credits Limits       │
+│  for ML student projects            │
 │                                     │
-│  بواسطة: علي العربي                │
-│  منذ: 3 أيام                       │
+│  By: Ali Arabi                      │
+│  3 days ago                         │
 └─────────────────────────────────────┘
 ```
 
-**العناصر:**
-- **عداد الأصوات** (`142`): بارز، لون Azure Blue، خط عريض
-- **زر التصويت**: يتغير لونه إذا صوّت المستخدم مسبقًا
-- **الموضع**: العداد في الزاوية اليمنى العلوية
+**Elements:**
+- **Vote Counter** (`142`): Prominent, Azure Blue color, bold font
+- **Vote Button**: Changes color if user has already voted
+- **Position**: Counter in the top-right corner
 
-### Optimistic UI (التحديث الفوري)
+### Optimistic UI (Instant Updates)
 
-**المشكلة التقليدية:**
+**Traditional Problem:**
 ```
-1. المستخدم يضغط "صوّت"
-2. الانتظار للسيرفر... (1-2 ثانية)
-3. تحديث الرقم في الواجهة
-❌ يشعر المستخدم بالبطء
+1. User clicks "Vote"
+2. Waiting for server... (1-2 seconds)
+3. Update number in UI
+❌ User feels slowness
 ```
 
-**الحل الاحترافي (Optimistic UI):**
+**Professional Solution (Optimistic UI):**
 ```javascript
-// الحالة الحالية: vote_count = 50
-// المستخدم يضغط "صوّت"
+// Current state: vote_count = 50
+// User clicks "Vote"
 
-// 1. تحديث فوري في React State
-setVoteCount(51); // ← يظهر فورًا للمستخدم
+// 1. Instant update in React State
+setVoteCount(51); // ← Shows immediately to user
 
-// 2. إرسال الطلب للسيرفر في الخلفية
+// 2. Send request to server in background
 try {
     await api.post('/vote', { suggestion_id });
-    // ✅ نجح - الرقم صحيح
+    // ✅ Success - number is correct
 } catch (error) {
-    // ❌ فشل - إرجاع الرقم القديم
+    // ❌ Failed - revert to old number
     setVoteCount(50);
-    showError("فشل التصويت، حاول مرة أخرى");
+    showError("Vote failed, please try again");
 }
 ```
 
-**النتيجة:** المستخدم يرى التغيير فورًا، التطبيق يبدو سريعًا جدًا.
+**Result:** User sees the change instantly, app feels incredibly fast.
 
 ---
 
