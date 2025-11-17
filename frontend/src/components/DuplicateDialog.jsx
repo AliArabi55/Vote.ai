@@ -13,33 +13,33 @@ const DuplicateDialog = ({ similarSuggestions, onVoteExisting, onCreateNew, onCl
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
-        <h2>🔍 مقترح مشابه موجود</h2>
+        <h2>🔍 Similar Suggestion Found</h2>
         
         <div className="similar-suggestion">
           <div className="similarity-score">
-            {Math.round(topMatch.similarity * 100)}% تشابه
+            {Math.round(topMatch.similarity * 100)}% match
           </div>
           <h3>{topMatch.title}</h3>
           <p>{topMatch.description}</p>
           <div className="vote-info">
-            <strong>{topMatch.vote_count} صوت</strong>
+            <strong>{topMatch.vote_count} votes</strong>
           </div>
         </div>
 
         <p className="dialog-message">
-          هذا المقترح لديه بالفعل {topMatch.vote_count} صوت. 
-          التصويت عليه أفضل من إنشاء مقترح مكرر.
+          This suggestion already has {topMatch.vote_count} votes. 
+          Voting on it is better than creating a duplicate.
         </p>
 
         <div className="dialog-actions">
           <button className="btn-primary" onClick={() => onVoteExisting(topMatch.id)}>
-            ✅ صوّت على المقترح الموجود
+            ✅ Vote on Existing Suggestion
           </button>
           <button className="btn-secondary" onClick={onCreateNew}>
-            ➕ أنشئ مقترح جديد
+            ➕ Create New Suggestion
           </button>
           <button className="btn-cancel" onClick={onClose}>
-            إلغاء
+            Cancel
           </button>
         </div>
       </div>

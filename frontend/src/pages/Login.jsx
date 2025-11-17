@@ -24,14 +24,14 @@ const Login = () => {
         navigate('/');
       } else {
         await authAPI.register(formData.email, formData.password, formData.fullName);
-        alert('✅ تم التسجيل بنجاح! يمكنك الآن تسجيل الدخول.');
+        alert('✅ Registration successful! You can now log in.');
         setIsLogin(true);
       }
     } catch (error) {
       alert(
         isLogin
-          ? 'فشل تسجيل الدخول. تحقق من البريد الإلكتروني وكلمة المرور.'
-          : 'فشل التسجيل. قد يكون البريد الإلكتروني مسجلاً بالفعل.'
+          ? 'Login failed. Check your email and password.'
+          : 'Registration failed. Email may already be registered.'
       );
     }
   };
@@ -39,14 +39,14 @@ const Login = () => {
   return (
     <div className="login-page">
       <div className="login-container">
-        <h1>🗳️ صوت السفراء</h1>
-        <h2>{isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}</h2>
+        <h1>🗳️ Ambassador Voice</h1>
+        <h2>{isLogin ? 'Login' : 'Create New Account'}</h2>
 
         <form onSubmit={handleSubmit}>
           {!isLogin && (
             <input
               type="text"
-              placeholder="الاسم الكامل"
+              placeholder="Full Name"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               required
@@ -56,7 +56,7 @@ const Login = () => {
 
           <input
             type="email"
-            placeholder="البريد الإلكتروني"
+            placeholder="Email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
@@ -65,7 +65,7 @@ const Login = () => {
 
           <input
             type="password"
-            placeholder="كلمة المرور"
+            placeholder="Password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             required
@@ -73,14 +73,14 @@ const Login = () => {
           />
 
           <button type="submit" className="btn-submit">
-            {isLogin ? 'دخول' : 'تسجيل'}
+            {isLogin ? 'Login' : 'Sign Up'}
           </button>
         </form>
 
         <p className="toggle-text">
-          {isLogin ? 'ليس لديك حساب؟ ' : 'لديك حساب بالفعل؟ '}
+          {isLogin ? "Don't have an account? " : 'Already have an account? '}
           <button className="toggle-link" onClick={() => setIsLogin(!isLogin)}>
-            {isLogin ? 'سجل الآن' : 'سجل الدخول'}
+            {isLogin ? 'Sign Up' : 'Login'}
           </button>
         </p>
       </div>

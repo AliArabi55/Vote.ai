@@ -1,72 +1,72 @@
 # Vote.ai - Ambassador Voice Platform
 
-## 🎉 تم إنشاء المشروع بالكامل!
+## 🎉 Project Successfully Created!
 
-تم إنشاء جميع الملفات بنجاح. إليك الخطوات التالية للبدء:
+All files have been successfully created. Here are the next steps to get started:
 
 ---
 
-## 🚀 البدء السريع
+## 🚀 Quick Start
 
-### 1️⃣ إعداد قاعدة البيانات
+### 1️⃣ Database Setup
 
 ```powershell
-# الاتصال بـ Azure PostgreSQL
+# Connect to Azure PostgreSQL
 psql -h <your-server>.postgres.database.azure.com -U <username> -d postgres
 
-# تشغيل السكريبت
+# Run the setup script
 \i backend/scripts/database_setup.sql
 ```
 
-### 2️⃣ إعداد Backend (Python/FastAPI)
+### 2️⃣ Backend Setup (Python/FastAPI)
 
 ```powershell
-# الانتقال إلى مجلد Backend
+# Navigate to backend folder
 cd backend
 
-# إنشاء بيئة افتراضية
+# Create virtual environment
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 
-# تثبيت المكتبات
+# Install libraries
 pip install -r requirements.txt
 
-# نسخ ملف الإعدادات
+# Copy settings file
 copy .env.example .env
 
-# تعديل .env بإعدادات Azure الخاصة بك
+# Edit .env with your Azure settings
 # DATABASE_URL, AZURE_OPENAI_API_KEY, etc.
 
-# تشغيل السيرفر
+# Run the server
 python main.py
 ```
 
-السيرفر سيعمل على: `http://localhost:8000`
-الوثائق التفاعلية: `http://localhost:8000/docs`
+Server will run on: `http://localhost:8000`
+Interactive docs: `http://localhost:8000/docs`
 
-### 3️⃣ إعداد Frontend (React)
+### 3️⃣ Frontend Setup (React)
 
 ```powershell
-# فتح نافذة PowerShell جديدة
+# Open a new PowerShell window
 cd frontend
 
-# تثبيت المكتبات
+# Install libraries
 npm install
 
-# تشغيل التطبيق
+# Run the application
 npm start
 ```
 
-التطبيق سيفتح على: `http://localhost:3000`
+Application will open on: `http://localhost:3000`
 
 ---
 
-## 📁 هيكل المشروع المكتمل
+## 📁 Complete Project Structure
 
 ```
 Vote.ai/
-├── README.md (الخطة الكاملة بالعربي)
-├── SETUP.md (هذا الملف)
+├── README.md (Complete plan in English)
+├── SETUP.md (This file)
 │
 ├── backend/
 │   ├── main.py ✅
@@ -124,63 +124,63 @@ Vote.ai/
 
 ---
 
-## ✅ الميزات المنفذة
+## ✅ Implemented Features
 
 ### Backend (FastAPI)
-- ✅ نظام مصادقة كامل (JWT)
-- ✅ إنشاء واستعراض المقترحات
-- ✅ نظام التصويت مع منع التكرار
-- ✅ كشف التكرار بالذكاء الاصطناعي (Azure OpenAI)
-- ✅ ترتيب تلقائي حسب عدد الأصوات
-- ✅ حماية كاملة مع CORS
+- ✅ Complete authentication system (JWT)
+- ✅ Create and view suggestions
+- ✅ Voting system with duplicate prevention
+- ✅ AI-powered duplicate detection (Azure OpenAI)
+- ✅ Automatic ranking by vote count
+- ✅ Full protection with CORS
 
 ### Frontend (React)
-- ✅ صفحة تسجيل الدخول/التسجيل
-- ✅ عرض المقترحات مرتبة
-- ✅ بطاقات مقترحات مع عداد الأصوات
-- ✅ Optimistic UI للتصويت الفوري
-- ✅ نافذة كشف التكرار الذكية
-- ✅ واجهة عربية كاملة (RTL)
+- ✅ Login/Registration page
+- ✅ Display ranked suggestions
+- ✅ Suggestion cards with vote counter
+- ✅ Optimistic UI for instant voting
+- ✅ Smart duplicate detection dialog
+- ✅ Full English interface
 
 ### Database (PostgreSQL)
-- ✅ جداول Users, Suggestions, Votes
-- ✅ Indexes للأداء العالي
-- ✅ Vector extension لـ AI
-- ✅ Composite keys لمنع التكرار
+- ✅ Users, Suggestions, Votes tables
+- ✅ Indexes for high performance
+- ✅ Vector extension for AI
+- ✅ Composite keys to prevent duplicates
 
 ---
 
-## 🧪 اختبار النظام
+## 🧪 Testing the System
 
-### 1. اختبار Backend
+### 1. Test Backend
 ```powershell
-# تسجيل مستخدم جديد
+# Register new user
 curl -X POST http://localhost:8000/auth/register `
   -H "Content-Type: application/json" `
   -d '{\"email\":\"test@example.com\",\"password\":\"test123\",\"full_name\":\"Test User\"}'
 
-# تسجيل الدخول
+# Login
 curl -X POST http://localhost:8000/auth/login `
   -F "username=test@example.com" `
   -F "password=test123"
 
-# الحصول على المقترحات (يحتاج Token)
+# Get suggestions (requires Token)
 curl http://localhost:8000/suggestions `
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
-### 2. اختبار Frontend
-1. افتح `http://localhost:3000`
-2. سجل حساب جديد
-3. أنشئ مقترحًا
-4. صوّت على المقترحات
-5. حاول إنشاء مقترح مشابه (سيكتشف AI التكرار)
+### 2. Test Frontend
+1. Open `http://localhost:3000`
+2. Register a new account
+3. Create a suggestion
+4. Vote on suggestions
+5. Try creating a similar suggestion (AI will detect the duplicate)
 
 ---
 
-## 🔧 إعدادات مهمة
+## 🔧 Important Settings
 
-### ملف `.env` في Backend
+### `.env` file in Backend
 ```ini
 DATABASE_URL=postgresql://user:pass@server.postgres.database.azure.com:5432/postgres
 AZURE_OPENAI_API_KEY=your-api-key
@@ -189,61 +189,61 @@ AZURE_OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 SECRET_KEY=generate-a-random-secret-key-here
 ```
 
-**لتوليد SECRET_KEY:**
+**To generate SECRET_KEY:**
 ```powershell
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
 ---
 
-## 📚 الوثائق
+## 📚 Documentation
 
-- **README.md**: الخطة الكاملة بالعربي مع التفاصيل التقنية
-- **API Docs**: `http://localhost:8000/docs` (تلقائية من FastAPI)
+- **README.md**: Complete plan in English with technical details
+- **API Docs**: `http://localhost:8000/docs` (automatic from FastAPI)
 - **Database Schema**: `backend/scripts/database_setup.sql`
 
 ---
 
-## 🎯 الخطوات التالية
+## 🎯 Next Steps
 
-1. ✅ قم بتعديل `.env` بإعدادات Azure الخاصة بك
-2. ✅ شغّل قاعدة البيانات SQL script
-3. ✅ شغّل Backend
-4. ✅ شغّل Frontend
-5. ✅ جرّب النظام!
-
----
-
-## 💡 نصائح
-
-- استخدم **Postman** لاختبار الـ API مباشرة
-- تحقق من `http://localhost:8000/docs` للوثائق التفاعلية
-- الـ Frontend يحفظ الـ Token في `localStorage`
-- لحذف الـ Token: افتح Console واكتب `localStorage.clear()`
+1. ✅ Edit `.env` with your Azure settings
+2. ✅ Run database SQL script
+3. ✅ Run Backend
+4. ✅ Run Frontend
+5. ✅ Try the system!
 
 ---
 
-## 🆘 مشاكل شائعة
+## 💡 Tips
 
-### Backend لا يعمل
-- تأكد من تثبيت جميع المكتبات: `pip install -r requirements.txt`
-- تحقق من ملف `.env` والإعدادات
-- تأكد من تشغيل PostgreSQL
+- Use **Postman** to test the API directly
+- Check `http://localhost:8000/docs` for interactive documentation
+- Frontend saves Token in `localStorage`
+- To clear Token: Open Console and type `localStorage.clear()`
 
-### Frontend لا يعمل
-- شغّل `npm install` أولاً
-- تأكد من Backend يعمل على port 8000
-- تحقق من Console للأخطاء
+---
+
+## 🆘 Common Issues
+
+### Backend not working
+- Ensure all libraries are installed: `pip install -r requirements.txt`
+- Check `.env` file and settings
+- Ensure PostgreSQL is running
+
+### Frontend not working
+- Run `npm install` first
+- Ensure Backend is running on port 8000
+- Check Console for errors
 
 ### Database Errors
-- تأكد من تثبيت pgvector extension
-- تحقق من صلاحيات المستخدم في Azure PostgreSQL
-- راجع `database_setup.sql` للتأكد من الـ tables
+- Ensure pgvector extension is installed
+- Check user permissions in Azure PostgreSQL
+- Review `database_setup.sql` to ensure tables are created
 
 ---
 
-## 🎉 جاهز للعمل!
+## 🎉 Ready to Work!
 
-المشروع جاهز بالكامل. جميع الملفات تم إنشاؤها بنجاح! 🚀
+The project is fully ready. All files have been successfully created! 🚀
 
-للدعم، راجع README.md للتفاصيل الكاملة.
+For support, review README.md for complete details.
