@@ -4,8 +4,8 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, LogOut, Activity, TrendingUp, CheckCircle, Plus, Filter } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Sparkles, LogOut } from 'lucide-react';
 import { suggestionsAPI, healthAPI } from '../services/api';
 import SuggestionCard from '../components/SuggestionCard';
 import CreateSuggestionModal from '../components/CreateSuggestionModal';
@@ -18,11 +18,6 @@ const Home = () => {
   const [filterStatus, setFilterStatus] = useState('all'); // all, pending, approved, etc.
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    checkBackendHealth();
-    loadSuggestions();
-  }, [filterStatus]);
 
   const checkBackendHealth = async () => {
     try {
@@ -49,6 +44,12 @@ const Home = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    checkBackendHealth();
+    loadSuggestions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterStatus]);
 
   const handleVoteSuccess = () => {
     // Optionally refetch suggestions
@@ -146,7 +147,7 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
