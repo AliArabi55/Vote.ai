@@ -18,7 +18,7 @@ const SuggestionCard = ({ suggestion, onVoteSuccess }) => {
       await handleVote(() => suggestionsAPI.toggleVote(suggestion.id));
       if (onVoteSuccess) onVoteSuccess();
     } catch (error) {
-      alert('فشل التصويت. حاول مرة أخرى.');
+      alert('Vote failed. Please try again.');
     }
   };
 
@@ -31,7 +31,7 @@ const SuggestionCard = ({ suggestion, onVoteSuccess }) => {
           onClick={onVoteClick}
           disabled={isVoting}
         >
-          {userHasVoted ? 'إلغاء التصويت' : 'صوّت'}
+          {userHasVoted ? 'Unvote' : 'Vote'}
         </button>
       </div>
 
@@ -41,12 +41,12 @@ const SuggestionCard = ({ suggestion, onVoteSuccess }) => {
 
         <div className="metadata">
           <span className="status-badge status-{suggestion.status}">
-            {suggestion.status === 'pending' && 'قيد المراجعة'}
-            {suggestion.status === 'approved' && 'مقبول'}
-            {suggestion.status === 'rejected' && 'مرفوض'}
+            {suggestion.status === 'pending' && 'Under Review'}
+            {suggestion.status === 'approved' && 'Approved'}
+            {suggestion.status === 'rejected' && 'Rejected'}
           </span>
           <span className="date">
-            {new Date(suggestion.created_at).toLocaleDateString('ar-SA')}
+            {new Date(suggestion.created_at).toLocaleDateString('en-US')}
           </span>
         </div>
       </div>

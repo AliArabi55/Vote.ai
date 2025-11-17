@@ -24,7 +24,7 @@ const Home = () => {
       const data = await suggestionsAPI.getAll();
       setSuggestions(data);
     } catch (error) {
-      alert('فشل تحميل المقترحات');
+      alert('Failed to load suggestions');
     } finally {
       setLoading(false);
     }
@@ -32,7 +32,7 @@ const Home = () => {
 
   const handleCheckDuplicate = async () => {
     if (!newSuggestion.title.trim()) {
-      alert('الرجاء إدخال عنوان المقترح');
+      alert('Please enter a suggestion title');
       return;
     }
 
@@ -49,7 +49,7 @@ const Home = () => {
         await createSuggestion();
       }
     } catch (error) {
-      alert('فشل التحقق من التكرار');
+      alert('Failed to check for duplicates');
     }
   };
 
@@ -60,9 +60,9 @@ const Home = () => {
       setShowCreateForm(false);
       setDuplicateCheck(null);
       loadSuggestions();
-      alert('✅ تم إنشاء المقترح بنجاح!');
+      alert('✅ Suggestion created successfully!');
     } catch (error) {
-      alert('فشل إنشاء المقترح');
+      alert('Failed to create suggestion');
     }
   };
 
@@ -73,38 +73,38 @@ const Home = () => {
       setNewSuggestion({ title: '', description: '' });
       setShowCreateForm(false);
       loadSuggestions();
-      alert('✅ تم تسجيل صوتك على المقترح الموجود!');
+      alert('✅ Vote recorded on existing suggestion!');
     } catch (error) {
-      alert('فشل التصويت');
+      alert('Failed to vote');
     }
   };
 
   if (loading) {
-    return <div className="loading">جاري التحميل...</div>;
+    return <div className="loading">Loading...</div>;
   }
 
   return (
     <div className="home-page">
       <header className="page-header">
-        <h1>🗳️ صوت السفراء</h1>
-        <p>المقترحات الأكثر شعبية تظهر في الأعلى</p>
+        <h1>🗳️ Ambassador Voice</h1>
+        <p>Most popular suggestions appear at the top</p>
         <button className="btn-create" onClick={() => setShowCreateForm(true)}>
-          ➕ مقترح جديد
+          ➕ New Suggestion
         </button>
       </header>
 
       {showCreateForm && (
         <div className="create-form">
-          <h2>إنشاء مقترح جديد</h2>
+          <h2>Create New Suggestion</h2>
           <input
             type="text"
-            placeholder="عنوان المقترح"
+            placeholder="Suggestion Title"
             value={newSuggestion.title}
             onChange={(e) => setNewSuggestion({ ...newSuggestion, title: e.target.value })}
             className="input-field"
           />
           <textarea
-            placeholder="الوصف التفصيلي (اختياري)"
+            placeholder="Detailed Description (optional)"
             value={newSuggestion.description}
             onChange={(e) =>
               setNewSuggestion({ ...newSuggestion, description: e.target.value })
@@ -114,10 +114,10 @@ const Home = () => {
           />
           <div className="form-actions">
             <button className="btn-submit" onClick={handleCheckDuplicate}>
-              إنشاء المقترح
+              Create Suggestion
             </button>
             <button className="btn-cancel" onClick={() => setShowCreateForm(false)}>
-              إلغاء
+              Cancel
             </button>
           </div>
         </div>
@@ -125,7 +125,7 @@ const Home = () => {
 
       <div className="suggestions-list">
         {suggestions.length === 0 ? (
-          <p className="empty-state">لا توجد مقترحات حتى الآن. كن أول من يضيف واحدًا!</p>
+          <p className="empty-state">No suggestions yet. Be the first to add one!</p>
         ) : (
           suggestions.map((suggestion) => (
             <SuggestionCard
