@@ -1,222 +1,169 @@
 /**
- * SuggestionCard Component - Vote.ai
- * Beautiful UI component to display suggestions with upvote/downvote functionality
+ * SuggestionCard - Premium Glassmorphism Interactive Card
+ * Features: Spring vote animations + Gradient borders + Hover glow
  */
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { suggestionsAPI } from '../services/api';
+import { motion } from 'framer-motion';
+import { ThumbsUp, User, Clock, TrendingUp } from 'lucide-react';
+import { cn } from '../utils/cn';
 
-const SuggestionCard = ({ suggestion, onVoteSuccess }) => {
+const SuggestionCard = ({ suggestion, onVote, userEmail, maxVotes = 100 }) => {
   const [isVoting, setIsVoting] = useState(false);
-  const [localVoteCount, setLocalVoteCount] = useState(suggestion.vote_count || 0);
-  const [userVote, setUserVote] = useState(null); // 'upvote', 'downvote', or null
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [localVotes, setLocalVotes] = useState(suggestion.votes || 0);
+  const hasVoted = suggestion.voters?.includes(userEmail);
 
-  // Check if user is logged in
-  const isAuthenticated = () => {
-    return !!localStorage.getItem('access_token');
-  };
+  // Calculate popularity percentage for progress bar
+  const popularity = Math.min((localVotes / maxVotes) * 100, 100);
 
-  // Handle upvote
-  const handleUpvote = async () => {
-    // Check authentication first
-    if (!isAuthenticated()) {
-      alert('⚠️ Please login to vote');
-      navigate('/login');
-      return;
-    }
+  const handleVote = async () => {
+    if (isVoting || hasVoted) return;
 
-    if (isVoting) return;
-    
     setIsVoting(true);
-    setError(null);
-    
+    setLocalVotes((prev) => prev + 1);
+
     try {
-      if (userVote === 'upvote') {
-        await suggestionsAPI.removeVote(suggestion.id);
-        setUserVote(null);
-        setLocalVoteCount(prev => prev - 1);
-      } else {
-        await suggestionsAPI.upvote(suggestion.id);
-        setUserVote('upvote');
-        setLocalVoteCount(prev => userVote === 'downvote' ? prev + 2 : prev + 1);
-      }
-      
-      if (onVoteSuccess) onVoteSuccess();
-    } catch (err) {
-      console.error('Upvote error:', err);
-      if (err.response?.status === 401) {
-        alert('⚠️ Session expired. Please login again.');
-        localStorage.removeItem('access_token');
-        navigate('/login');
-      } else {
-        setError(err.response?.data?.detail || 'Failed to vote. Please try again.');
-      }
+      await onVote(suggestion.id);
+    } catch (error) {
+      // Revert on error
+      setLocalVotes((prev) => prev - 1);
     } finally {
-      setIsVoting(false);
+      setTimeout(() => setIsVoting(false), 300);
     }
   };
 
-  // Handle downvote
-  const handleDownvote = async () => {
-    // Check authentication first
-    if (!isAuthenticated()) {
-      alert('⚠️ Please login to vote');
-      navigate('/login');
-      return;
-    }
+  // Format date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
-    if (isVoting) return;
-    
-    setIsVoting(true);
-    setError(null);
-    
-    try {
-      if (userVote === 'downvote') {
-        await suggestionsAPI.removeVote(suggestion.id);
-        setUserVote(null);
-        setLocalVoteCount(prev => prev + 1);
-      } else {
-        await suggestionsAPI.downvote(suggestion.id);
-        setUserVote('downvote');
-        setLocalVoteCount(prev => userVote === 'upvote' ? prev - 2 : prev - 1);
-      }
-      
-      if (onVoteSuccess) onVoteSuccess();
-    } catch (err) {
-      console.error('Downvote error:', err);
-      if (err.response?.status === 401) {
-        alert('⚠️ Session expired. Please login again.');
-        localStorage.removeItem('access_token');
-        navigate('/login');
-      } else {
-        setError(err.response?.data?.detail || 'Failed to vote. Please try again.');
-      }
-    } finally {
-      setIsVoting(false);
-    }
-  };
-
-  // Get status badge color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'approved':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'implemented':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-1">
-      {/* Card Header */}
-      <div className="p-6">
-        {/* Status Badge & Vote Count */}
-        <div className="flex justify-between items-start mb-4">
-          <span
-            className={`px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(
-              suggestion.status
-            )}`}
-          >
-            {suggestion.status.charAt(0).toUpperCase() + suggestion.status.slice(1)}
-          </span>
-          
-          <div className="flex items-center bg-gradient-to-r from-purple-50 to-blue-50 px-4 py-2 rounded-full border border-purple-200">
-            <svg
-              className="w-5 h-5 text-purple-600 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-            </svg>
-            <span className="text-lg font-bold text-purple-700">{localVoteCount}</span>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      whileHover={{ y: -4 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      className={cn(
+        'glass-card-hover rounded-2xl p-6',
+        'relative overflow-hidden group'
+      )}
+    >
+      {/* Gradient Border Glow on Hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-neon-purple via-neon-blue to-neon-cyan opacity-20 blur-xl" />
+      </div>
+
+      <div className="relative z-10">
+        {/* Header - Author & Date */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neon-purple to-neon-blue flex items-center justify-center">
+              <User className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-sm font-medium text-gray-300">
+              {suggestion.author_email?.split('@')[0] || 'Anonymous'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <Clock className="w-3 h-3" />
+            <span>{formatDate(suggestion.created_at)}</span>
           </div>
         </div>
 
-        {/* Title */}
-        <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight hover:text-purple-600 transition-colors">
-          {suggestion.title}
-        </h3>
-
-        {/* Description */}
-        <p className="text-gray-600 text-sm leading-relaxed mb-4">
-          {suggestion.description}
+        {/* Suggestion Text */}
+        <p className="text-white font-medium text-lg mb-6 leading-relaxed">
+          {suggestion.suggestion_text}
         </p>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-xs">{error}</p>
+        {/* Footer - Votes & Progress */}
+        <div className="space-y-3">
+          {/* Popularity Progress Bar */}
+          <div className="relative h-2 bg-glass-white rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${popularity}%` }}
+              transition={{ type: 'spring', stiffness: 100, damping: 15 }}
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-neon-purple via-neon-blue to-neon-cyan rounded-full"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-neon-purple/20 via-neon-blue/20 to-neon-cyan/20 animate-shimmer" />
           </div>
-        )}
 
-        {/* Voting Buttons */}
-        <div className="flex gap-3 mt-4">
-          {/* Upvote Button */}
-          <button
-            onClick={handleUpvote}
-            disabled={isVoting}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-              userVote === 'upvote'
-                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg scale-105'
-                : 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 hover:from-green-100 hover:to-emerald-100 border border-green-200 hover:scale-105'
-            } ${isVoting ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}`}
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-            </svg>
-            {userVote === 'upvote' ? 'Upvoted' : 'Upvote'}
-          </button>
+          {/* Vote Button & Stats */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-gray-400 text-sm">
+              <TrendingUp className="w-4 h-4" />
+              <span>
+                {popularity.toFixed(0)}% popular
+              </span>
+            </div>
 
-          {/* Downvote Button */}
-          <button
-            onClick={handleDownvote}
-            disabled={isVoting}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-              userVote === 'downvote'
-                ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg scale-105'
-                : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-700 hover:from-red-100 hover:to-rose-100 border border-red-200 hover:scale-105'
-            } ${isVoting ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}`}
-          >
-            <svg className="w-5 h-5 transform rotate-180" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-            </svg>
-            {userVote === 'downvote' ? 'Downvoted' : 'Downvote'}
-          </button>
+            {/* Vote Button */}
+            <motion.button
+              onClick={handleVote}
+              disabled={hasVoted || isVoting}
+              whileHover={!hasVoted ? { scale: 1.05 } : {}}
+              whileTap={!hasVoted ? { scale: 0.95 } : {}}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-xl font-bold',
+                'transition-all duration-300',
+                hasVoted
+                  ? 'glass-card bg-neon-purple/20 text-neon-purple cursor-not-allowed'
+                  : 'btn-primary hover:shadow-glow-lg'
+              )}
+            >
+              {/* Vote Counter with Spring Animation */}
+              <motion.span
+                key={localVotes}
+                initial={{ scale: 1.5, color: '#a855f7' }}
+                animate={{ scale: 1, color: hasVoted ? '#a855f7' : '#ffffff' }}
+                transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+                className="text-lg font-black"
+              >
+                {localVotes}
+              </motion.span>
+
+              {/* Thumbs Up Icon */}
+              <motion.div
+                animate={isVoting ? { rotate: [0, -15, 15, 0] } : {}}
+                transition={{ duration: 0.3 }}
+              >
+                <ThumbsUp
+                  className={cn(
+                    'w-5 h-5',
+                    hasVoted && 'fill-neon-purple'
+                  )}
+                />
+              </motion.div>
+
+              <span className="text-sm">
+                {hasVoted ? 'Voted' : 'Vote'}
+              </span>
+            </motion.button>
+          </div>
         </div>
       </div>
 
-      {/* Card Footer */}
-      <div className="bg-gradient-to-r from-gray-50 to-slate-50 px-6 py-3 border-t border-gray-100">
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <div className="flex items-center gap-1">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span>{suggestion.id.slice(0, 8)}...</span>
-          </div>
-          
-          <span>
-            {new Date(suggestion.created_at).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </span>
-        </div>
-      </div>
-    </div>
+      {/* Ripple Effect on Vote */}
+      {isVoting && (
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0.5 }}
+          animate={{ scale: 2, opacity: 0 }}
+          transition={{ duration: 0.6 }}
+          className="absolute inset-0 bg-neon-purple/30 rounded-2xl pointer-events-none"
+        />
+      )}
+    </motion.div>
   );
 };
 

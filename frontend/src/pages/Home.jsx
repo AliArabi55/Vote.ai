@@ -1,329 +1,269 @@
 /**
- * Home Page - Vote.ai
- * Displays all suggestions with filters, stats, and responsive grid
+ * Home Dashboard - Premium Glassmorphism Masonry Layout
+ * Features: Glass filter bar + Masonry grid + FAB button with pulse
  */
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { suggestionsAPI, healthAPI } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Filter, TrendingUp, Clock, Sparkles } from 'lucide-react';
+import Layout from '../components/Layout';
 import SuggestionCard from '../components/SuggestionCard';
 import CreateSuggestionModal from '../components/CreateSuggestionModal';
+import { suggestionsAPI } from '../services/api';
+import { cn } from '../utils/cn';
 
 const Home = () => {
   const [suggestions, setSuggestions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [backendStatus, setBackendStatus] = useState('checking');
-  const [filterStatus, setFilterStatus] = useState('all'); // all, pending, approved, etc.
+  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+  const [filter, setFilter] = useState('all'); // 'all', 'top', 'new'
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userEmail = user.email || '';
+
+  // Fetch suggestions on mount
   useEffect(() => {
-    checkBackendHealth();
-    loadSuggestions();
-  }, [filterStatus]);
+    fetchSuggestions();
+  }, []);
 
-  const checkBackendHealth = async () => {
-    try {
-      await healthAPI.check();
-      setBackendStatus('healthy');
-    } catch (err) {
-      setBackendStatus('unhealthy');
-      console.error('Backend health check failed:', err);
-    }
-  };
+  // Apply filter when suggestions or filter changes
+  useEffect(() => {
+    applyFilter();
+  }, [suggestions, filter]);
 
-  const loadSuggestions = async () => {
+  const fetchSuggestions = async () => {
     setLoading(true);
-    setError(null);
-
     try {
-      const params = filterStatus !== 'all' ? { status: filterStatus } : {};
-      const data = await suggestionsAPI.getAll(params);
+      const data = await suggestionsAPI.getAll();
       setSuggestions(data);
     } catch (err) {
-      console.error('Failed to fetch suggestions:', err);
-      setError(err.response?.data?.detail || 'Failed to load suggestions. Please try again.');
+      setError('Failed to load suggestions. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVoteSuccess = () => {
-    // Optionally refetch suggestions
-    // loadSuggestions();
+  const applyFilter = () => {
+    let filtered = [...suggestions];
+
+    switch (filter) {
+      case 'top':
+        // Sort by votes descending
+        filtered.sort((a, b) => (b.votes || 0) - (a.votes || 0));
+        break;
+      case 'new':
+        // Sort by created_at descending
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        break;
+      default:
+        // 'all' - keep original order
+        break;
+    }
+
+    setFilteredSuggestions(filtered);
   };
 
-  const handleSuggestionCreated = () => {
-    // Reload suggestions after new suggestion is created
-    loadSuggestions();
-  };
-
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      navigate('/login');
+  const handleVote = async (suggestionId) => {
+    try {
+      await suggestionsAPI.vote(suggestionId);
+      // Update local state
+      setSuggestions((prev) =>
+        prev.map((s) =>
+          s.id === suggestionId
+            ? {
+                ...s,
+                votes: (s.votes || 0) + 1,
+                voters: [...(s.voters || []), userEmail],
+              }
+            : s
+        )
+      );
+    } catch (err) {
+      throw new Error(err.response?.data?.detail || 'Failed to vote');
     }
   };
 
-  // Filter buttons
-  const filters = [
-    { value: 'all', label: 'All', color: 'bg-gray-100 text-gray-800' },
-    { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'approved', label: 'Approved', color: 'bg-green-100 text-green-800' },
-    { value: 'implemented', label: 'Implemented', color: 'bg-blue-100 text-blue-800' },
-    { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-800' },
+  const handleCreateSuggestion = async (text) => {
+    try {
+      const newSuggestion = await suggestionsAPI.create(text);
+      setSuggestions((prev) => [newSuggestion, ...prev]);
+    } catch (err) {
+      throw new Error(err.response?.data?.detail || 'Failed to create suggestion');
+    }
+  };
+
+  const handleCheckSimilarity = async (text) => {
+    try {
+      const similar = await suggestionsAPI.checkSimilarity(text);
+      return similar;
+    } catch (err) {
+      console.error('Similarity check failed:', err);
+      return [];
+    }
+  };
+
+  // Filter button config
+  const filterButtons = [
+    { id: 'all', label: 'All Ideas', icon: Filter },
+    { id: 'top', label: 'Top Voted', icon: TrendingUp },
+    { id: 'new', label: 'Latest', icon: Clock },
   ];
 
+  // Staggered grid animation
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+      },
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <header className="bg-white shadow-md border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            {/* Logo & Title */}
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-3 rounded-xl shadow-lg">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  Vote.ai
-                </h1>
-                <p className="text-sm text-gray-500">AI-Powered Suggestions Platform</p>
-              </div>
-            </div>
-
-            {/* Right Side: Status & Logout */}
-            <div className="flex items-center gap-4">
-              {/* Backend Status */}
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-3 h-3 rounded-full ${
-                    backendStatus === 'healthy'
-                      ? 'bg-green-500 animate-pulse'
-                      : backendStatus === 'unhealthy'
-                      ? 'bg-red-500'
-                      : 'bg-yellow-500 animate-pulse'
-                  }`}
-                ></div>
-                <span className="text-sm text-gray-600">
-                  {backendStatus === 'healthy'
-                    ? 'Online'
-                    : backendStatus === 'unhealthy'
-                    ? 'Offline'
-                    : 'Checking...'}
-                </span>
-              </div>
-
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg font-semibold hover:bg-red-100 transition-colors border border-red-200"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  />
-                </svg>
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters */}
-        <div className="mb-8">
-          <div className="bg-white rounded-xl shadow-md p-4 border border-gray-200">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-sm font-semibold text-gray-700">Filter by:</span>
-              {filters.map((filter) => (
-                <button
-                  key={filter.value}
-                  onClick={() => setFilterStatus(filter.value)}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                    filterStatus === filter.value
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md scale-105'
-                      : filter.color + ' hover:scale-105'
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                  <path
-                    fillRule="evenodd"
-                    d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{suggestions.length}</p>
-                <p className="text-sm text-gray-500">Total Suggestions</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {suggestions.reduce((sum, s) => sum + (s.vote_count || 0), 0)}
-                </p>
-                <p className="text-sm text-gray-500">Total Votes</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className="bg-green-100 p-3 rounded-lg">
-                <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {suggestions.filter((s) => s.status === 'approved').length}
-                </p>
-                <p className="text-sm text-gray-500">Approved</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-600 font-semibold">Loading suggestions...</p>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && !loading && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-            <svg className="w-12 h-12 text-red-500 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <p className="text-red-700 font-semibold mb-2">Error Loading Suggestions</p>
-            <p className="text-red-600 text-sm mb-4">{error}</p>
-            <button
-              onClick={loadSuggestions}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && !error && suggestions.length === 0 && (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-            <svg className="w-20 h-20 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-              />
-            </svg>
-            <p className="text-gray-600 font-semibold text-lg mb-2">No suggestions found</p>
-            <p className="text-gray-500">Be the first to create a suggestion!</p>
-          </div>
-        )}
-
-        {/* Suggestions Grid */}
-        {!loading && !error && suggestions.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {suggestions.map((suggestion) => (
-              <SuggestionCard
-                key={suggestion.id}
-                suggestion={suggestion}
-                onVoteSuccess={handleVoteSuccess}
-              />
-            ))}
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className="text-sm text-gray-500">
-              © 2024 Vote.ai - Powered by Azure OpenAI & PostgreSQL
+    <Layout>
+      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <h1 className="text-5xl sm:text-6xl font-black mb-4">
+              <span className="gradient-text">Student Voice</span>
+            </h1>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              Vote on the best suggestions and help shape the future of our community
             </p>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Built with</span>
-              <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="text-xs text-gray-400">by Ali Arabi</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+          </motion.div>
 
-      {/* Floating Action Button (FAB) - Create Suggestion */}
-      <button
+          {/* Filter Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="glass-card rounded-2xl p-4 mb-8 flex flex-wrap gap-3 justify-center"
+          >
+            {filterButtons.map((btn) => {
+              const Icon = btn.icon;
+              return (
+                <motion.button
+                  key={btn.id}
+                  onClick={() => setFilter(btn.id)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={cn(
+                    'flex items-center gap-2 px-5 py-3 rounded-xl font-bold transition-all',
+                    filter === btn.id
+                      ? 'btn-primary shadow-glow-md'
+                      : 'glass-card hover:bg-glass-glow'
+                  )}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span>{btn.label}</span>
+                </motion.button>
+              );
+            })}
+          </motion.div>
+
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-20">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="w-12 h-12 border-4 border-neon-purple border-t-transparent rounded-full"
+              />
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="glass-card bg-red-500/10 border-red-500/30 rounded-2xl p-6 text-center mb-8"
+            >
+              <p className="text-red-400">{error}</p>
+            </motion.div>
+          )}
+
+          {/* Suggestions Grid - Masonry Layout */}
+          {!loading && (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              <AnimatePresence mode="popLayout">
+                {filteredSuggestions.map((suggestion) => (
+                  <motion.div
+                    key={suggestion.id}
+                    layout
+                    variants={{
+                      hidden: { opacity: 0, scale: 0.8 },
+                      visible: { opacity: 1, scale: 1 },
+                    }}
+                  >
+                    <SuggestionCard
+                      suggestion={suggestion}
+                      onVote={handleVote}
+                      userEmail={userEmail}
+                      maxVotes={Math.max(...filteredSuggestions.map((s) => s.votes || 0), 1)}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
+          {/* Empty State */}
+          {!loading && filteredSuggestions.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-20"
+            >
+              <Sparkles className="w-16 h-16 text-neon-purple mx-auto mb-4 opacity-50" />
+              <h3 className="text-2xl font-bold text-white mb-2">No suggestions yet</h3>
+              <p className="text-gray-400 mb-6">Be the first to share your idea!</p>
+              <motion.button
+                onClick={() => setIsModalOpen(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="btn-primary px-8 py-3 rounded-xl font-bold"
+              >
+                Create First Suggestion
+              </motion.button>
+            </motion.div>
+          )}
+        </div>
+      </div>
+
+      {/* Floating Action Button (FAB) */}
+      <motion.button
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-8 right-8 bg-gradient-to-r from-purple-600 to-blue-600 text-white p-5 rounded-full shadow-2xl hover:shadow-purple-500/50 hover:scale-110 transition-all duration-300 group z-40"
-        aria-label="Create new suggestion"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.5 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="fixed bottom-8 right-8 w-16 h-16 rounded-full btn-primary shadow-glow-lg flex items-center justify-center z-30 animate-glow-pulse"
       >
-        <svg
-          className="w-8 h-8 transform group-hover:rotate-90 transition-transform duration-300"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
+        <Plus className="w-8 h-8 text-white" />
+      </motion.button>
 
       {/* Create Suggestion Modal */}
       <CreateSuggestionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuggestionCreated={handleSuggestionCreated}
+        onSubmit={handleCreateSuggestion}
+        checkSimilarity={handleCheckSimilarity}
       />
-    </div>
+    </Layout>
   );
 };
 
