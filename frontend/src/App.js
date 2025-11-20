@@ -42,9 +42,19 @@ function App() {
           }
         />
 
-        {/* Protected Route - Home Page */}
+        {/* Protected Route - Home Dashboard */}
         <Route
           path="/"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Alternative route /home */}
+        <Route
+          path="/home"
           element={
             <ProtectedRoute>
               <Home />

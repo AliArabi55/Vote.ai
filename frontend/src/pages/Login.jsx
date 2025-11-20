@@ -1,206 +1,239 @@
 /**
- * Login Page - Vote.ai
- * Modern, clean login/signup page with Tailwind CSS
+ * Login Page - Premium Glassmorphism Split Screen
+ * Features: 3D Hero Text + Glowing Glass Form + Staggered Animations
  */
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Mail, Lock, ArrowRight, Sparkles, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import { cn } from '../utils/cn';
 
 const Login = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    fullName: '',
-    role: 'ambassador', // Default role
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError('');
 
     try {
-      if (isLogin) {
-        // Login
-        await authAPI.login(formData.email, formData.password);
-        // Navigate to home page
-        navigate('/');
-      } else {
-        // Register
-        await authAPI.register(formData.email, formData.password, formData.fullName);
-        // Auto-login after registration
-        await authAPI.login(formData.email, formData.password);
-        navigate('/');
-      }
+      const response = await authAPI.login({ email, password });
+      localStorage.setItem('access_token', response.access_token);
+      localStorage.setItem('user', JSON.stringify({ email }));
+      navigate('/home');
     } catch (err) {
-      console.error('Auth error:', err);
-      const errorMessage = err.response?.data?.detail || 
-        (isLogin ? 'Login failed. Check your email and password.' : 'Registration failed. Email may already be registered.');
-      setError(errorMessage);
+      setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Stagger animation for form elements
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: 'spring', stiffness: 100, damping: 15 },
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex items-center justify-center px-4 py-8">
-      <div className="max-w-md w-full">
-        {/* Logo & Title */}
-        <div className="text-center mb-8">
-          <div className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-2xl shadow-xl mb-4">
-            <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
-            Vote.ai
-          </h1>
-          <p className="text-gray-600">
-            {isLogin ? 'Welcome back!' : 'Create your account'}
-          </p>
-        </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="mesh-background">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(168,85,247,0.15)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(59,130,246,0.12)_0%,transparent_50%),radial-gradient(circle_at_40%_20%,rgba(6,182,212,0.1)_0%,transparent_50%)] bg-[length:400%_400%] animate-mesh-move" />
+      </div>
 
-        {/* Login/Signup Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            {isLogin ? 'Sign In' : 'Sign Up'}
-          </h2>
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <p className="text-red-700 text-sm font-medium">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Full Name (only for signup) */}
-            {!isLogin && (
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <input
-                  id="fullName"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  required={!isLogin}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none"
-                />
-              </div>
-            )}
-
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none"
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-                minLength={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none"
-              />
-              {!isLogin && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Must be at least 6 characters
-                </p>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-3 px-4 rounded-lg font-semibold text-white text-lg transition-all duration-200 ${
-                loading
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
-              }`}
-            >
-              {loading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>{isLogin ? 'Signing in...' : 'Creating account...'}</span>
-                </div>
-              ) : (
-                <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
-              )}
-            </button>
-          </form>
-
-          {/* Toggle Login/Signup */}
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError(null);
-                }}
-                className="text-purple-600 hover:text-purple-700 font-semibold transition-colors"
+      {/* Main Content - Split Screen */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+          {/* ========================================
+              LEFT SIDE - HERO SECTION
+              ======================================== */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, type: 'spring', stiffness: 50 }}
+            className="text-center lg:text-left"
+          >
+            {/* Floating Icons */}
+            <div className="relative mb-8">
+              <motion.div
+                animate={{ y: [0, -20, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute -top-10 left-1/4 lg:left-10"
               >
-                {isLogin ? 'Sign Up' : 'Sign In'}
-              </button>
-            </p>
-          </div>
-
-          {/* Demo Credentials (for testing) */}
-          {isLogin && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-xs text-blue-800 font-semibold mb-2">🧪 Demo Credentials:</p>
-              <p className="text-xs text-blue-700">
-                Email: <code className="bg-blue-100 px-1 rounded">ali@microsoft.com</code>
-              </p>
-              <p className="text-xs text-blue-700">
-                Password: <code className="bg-blue-100 px-1 rounded">mypassword123</code>
-              </p>
+                <Sparkles className="w-12 h-12 text-neon-purple opacity-50" />
+              </motion.div>
+              <motion.div
+                animate={{ y: [0, 20, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+                className="absolute top-20 right-1/4 lg:right-10"
+              >
+                <Zap className="w-10 h-10 text-neon-cyan opacity-50" />
+              </motion.div>
             </div>
-          )}
-        </div>
 
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
-            Powered by Azure OpenAI & PostgreSQL
-          </p>
+            {/* Hero Headline */}
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight mb-6">
+              <span className="gradient-text">Empowering</span>
+              <br />
+              <span className="text-white">Student Voices</span>
+              <br />
+              <span className="gradient-text-pink">with AI</span>
+            </h1>
+
+            <p className="text-lg sm:text-xl text-gray-400 mb-8 max-w-lg mx-auto lg:mx-0">
+              Transform ideas into impact. Vote on suggestions, powered by intelligent
+              duplicate detection and community collaboration.
+            </p>
+
+            {/* Feature Pills */}
+            <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+              {['AI-Powered', 'Real-time Voting', 'Smart Filters'].map((feature, i) => (
+                <motion.div
+                  key={feature}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5 + i * 0.1 }}
+                  className="glass-card px-4 py-2 rounded-full text-sm font-semibold text-gray-300"
+                >
+                  {feature}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* ========================================
+              RIGHT SIDE - LOGIN FORM
+              ======================================== */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="w-full max-w-md mx-auto"
+          >
+            {/* Glass Card Container */}
+            <div className="glass-card rounded-3xl p-8 sm:p-10 relative overflow-hidden">
+              {/* Glow Effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-neon-purple via-neon-blue to-neon-cyan opacity-20 blur-2xl rounded-3xl" />
+
+              <div className="relative z-10">
+                {/* Form Header */}
+                <motion.div variants={itemVariants} className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+                  <p className="text-gray-400">Sign in to continue to Vote.ai</p>
+                </motion.div>
+
+                {/* Login Form */}
+                <form onSubmit={handleLogin} className="space-y-6">
+                  {/* Email Input */}
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="ali@microsoft.com"
+                        required
+                        className={cn(
+                          'glass-input w-full pl-12 pr-4 py-3 rounded-xl',
+                          'text-white placeholder-gray-500',
+                          'focus:ring-2 focus:ring-neon-purple'
+                        )}
+                      />
+                    </div>
+                  </motion.div>
+
+                  {/* Password Input */}
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className={cn(
+                          'glass-input w-full pl-12 pr-4 py-3 rounded-xl',
+                          'text-white placeholder-gray-500',
+                          'focus:ring-2 focus:ring-neon-purple'
+                        )}
+                      />
+                    </div>
+                  </motion.div>
+
+                  {/* Error Message */}
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="glass-card bg-red-500/10 border-red-500/30 px-4 py-3 rounded-xl"
+                    >
+                      <p className="text-sm text-red-400">{error}</p>
+                    </motion.div>
+                  )}
+
+                  {/* Submit Button */}
+                  <motion.button
+                    variants={itemVariants}
+                    type="submit"
+                    disabled={loading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={cn(
+                      'w-full btn-primary py-4 rounded-xl',
+                      'flex items-center justify-center gap-2',
+                      'font-bold text-lg',
+                      loading && 'opacity-50 cursor-not-allowed'
+                    )}
+                  >
+                    {loading ? (
+                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>Sign In</span>
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </motion.button>
+                </form>
+
+                {/* Demo Credentials */}
+                <motion.div variants={itemVariants} className="mt-6 text-center">
+                  <p className="text-xs text-gray-500">
+                    Demo: ali@microsoft.com / mypassword123
+                  </p>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>
